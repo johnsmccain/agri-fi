@@ -81,4 +81,3 @@ export class TradeDeal {
   @OneToMany(() => Investment, investment => investment.tradeDeal)
   investments: Investment[];
 }
-}

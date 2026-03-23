@@ -31,7 +31,7 @@ describe('EscrowService', () => {
     };
 
     mockDataSource = {
-      transaction: jest.fn().mockImplementation((callback) => callback(mockManager)),
+      transaction: jest.fn().mockImplementation((cb: (m: typeof mockManager) => Promise<unknown>) => cb(mockManager)),
     } as any;
 
     mockPaymentDistributionRepo = {
@@ -138,7 +138,9 @@ describe('EscrowService', () => {
         update: jest.fn().mockResolvedValue(undefined),
       };
 
-      mockDataSource.transaction.mockImplementation((callback) => callback(mockManager));
+      (mockDataSource.transaction as jest.Mock).mockImplementation(
+        (cb: (m: typeof mockManager) => Promise<unknown>) => cb(mockManager),
+      );
       mockConfigService.get.mockReturnValue('platform-wallet');
       mockStellarService.releaseEscrow.mockResolvedValue(['stellar-tx-123']);
 
@@ -223,7 +225,9 @@ describe('EscrowService', () => {
         update: jest.fn(),
       };
 
-      mockDataSource.transaction.mockImplementation((callback) => callback(mockManager));
+      (mockDataSource.transaction as jest.Mock).mockImplementation(
+        (cb: (m: typeof mockManager) => Promise<unknown>) => cb(mockManager),
+      );
       mockConfigService.get.mockReturnValue('platform-wallet');
       
       // Simulate Stellar failure
@@ -270,7 +274,9 @@ describe('EscrowService', () => {
         update: jest.fn(),
       };
 
-      mockDataSource.transaction.mockImplementation((callback) => callback(mockManager));
+      (mockDataSource.transaction as jest.Mock).mockImplementation(
+        (cb: (m: typeof mockManager) => Promise<unknown>) => cb(mockManager),
+      );
 
       await service.processDealDelivered(payload);
 
