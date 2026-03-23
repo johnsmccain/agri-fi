@@ -17,4 +17,11 @@ export class QueueService {
       throw err;
     }
   }
+
+  /**
+   * Enqueue a deal.delivered job to trigger escrow release
+   */
+  async enqueueDealDelivered(tradeDealId: string): Promise<void> {
+    await this.emit('deal.delivered', { tradeDealId });
+  }
 }
