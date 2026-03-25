@@ -92,6 +92,58 @@ export class TradeDealsService {
     return this.tradeDealRepo.save(savedDeal);
   }
 
+  async findOpen(query: {
+    commodity?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<any[]> {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+    const skip = (page - 1) * limit;
+
+    const qb = this.tradeDealRepo
+      .createQueryBuilder("deal")
+      .where("deal.status = :status", { status: "open" })
+      .select([
+        "deal.id",
+        "deal.commodity",
+        "deal.quantity",
+        "deal.quantityUnit",
+        "deal.totalValue",
+        "deal.totalInvested",
+        "deal.tokenCount",
+        "deal.tokenSymbol",
+        "deal.deliveryDate",
+        "deal.farmerId",
+        "deal.traderId",
+      ])
+      .skip(skip)
+      .take(limit);
+
+    if (query.commodity) {
+      qb.andWhere("LOWER(deal.commodity) = LOWER(:commodity)", {
+        commodity: query.commodity,
+      });
+    }
+
+    const deals = await qb.getMany();
+
+    return deals.map((deal) => ({
+      id: deal.id,
+      commodity: deal.commodity,
+      quantity: deal.quantity,
+      quantity_unit: deal.quantityUnit,
+      total_value: deal.totalValue,
+      total_invested: deal.totalInvested,
+      token_count: deal.tokenCount,
+      token_symbol: deal.tokenSymbol,
+      delivery_date: deal.deliveryDate,
+      farmer_id: deal.farmerId,
+      trader_id: deal.traderId,
+      remaining_funding: Number(deal.totalValue) - Number(deal.totalInvested),
+    }));
+  }
+
   async findOne(id: string): Promise<any> {
     const deal = await this.tradeDealRepo.findOne({
       where: { id },

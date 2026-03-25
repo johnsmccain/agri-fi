@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Param,
+  Query,
   Body,
   UseGuards,
   Request,
@@ -37,6 +38,19 @@ export class TradeDealsController {
     }
 
     return this.tradeDealsService.createDeal(req.user.id, dto);
+  }
+
+  @Get()
+  async findOpen(
+    @Query("commodity") commodity?: string,
+    @Query("page") page?: string,
+    @Query("limit") limit?: string,
+  ): Promise<any[]> {
+    return this.tradeDealsService.findOpen({
+      commodity,
+      page: page ? parseInt(page, 10) : undefined,
+      limit: limit ? parseInt(limit, 10) : undefined,
+    });
   }
 
   @Get(":id")
