@@ -5,6 +5,7 @@ import { QueueService } from './queue.service';
 import { QueueProcessor } from './queue.processor';
 import { TradeDealsModule } from '../trade-deals/trade-deals.module';
 import { StellarModule } from '../stellar/stellar.module';
+import { InvestmentsModule } from '../investments/investments.module';
 
 export const QUEUE_SERVICE = 'QUEUE_SERVICE';
 
@@ -28,6 +29,7 @@ export const QUEUE_SERVICE = 'QUEUE_SERVICE';
     ]),
     TradeDealsModule,
     StellarModule,
+    InvestmentsModule,
   ],
   providers: [QueueService, QueueProcessor],
   exports: [QueueService, ClientsModule],

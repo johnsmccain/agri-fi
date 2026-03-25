@@ -8,6 +8,7 @@ import { InvestmentsService } from "./investments.service";
 import { Investment, InvestmentStatus } from "./entities/investment.entity";
 import { TradeDeal } from "../trade-deals/entities/trade-deal.entity";
 import { StellarService } from "../stellar/stellar.service";
+import { QueueService } from "../queue/queue.service";
 import { CreateInvestmentDto } from "./dto/create-investment.dto";
 
 const mockTradeDeal = (): TradeDeal => ({
@@ -54,9 +55,11 @@ describe("InvestmentsService", () => {
     find: jest.Mock;
     create: jest.Mock;
     save: jest.Mock;
+    update: jest.Mock;
   };
   let tradeDealRepo: { findOne: jest.Mock; update: jest.Mock };
   let stellarService: { fundEscrow: jest.MockedFunction<any> };
+  let queueService: { enqueueInvestmentFund: jest.MockedFunction<any> };
 
   beforeEach(async () => {
     investmentRepo = {
@@ -64,9 +67,11 @@ describe("InvestmentsService", () => {
       find: jest.fn(),
       create: jest.fn(),
       save: jest.fn(),
+      update: jest.fn(),
     };
     tradeDealRepo = { findOne: jest.fn(), update: jest.fn() };
     stellarService = { fundEscrow: jest.fn() };
+    queueService = { enqueueInvestmentFund: jest.fn().mockResolvedValue(undefined) };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -74,6 +79,7 @@ describe("InvestmentsService", () => {
         { provide: getRepositoryToken(Investment), useValue: investmentRepo },
         { provide: getRepositoryToken(TradeDeal), useValue: tradeDealRepo },
         { provide: StellarService, useValue: stellarService },
+        { provide: QueueService, useValue: queueService },
       ],
     }).compile();
 
@@ -263,6 +269,9 @@ describe("InvestmentsService", () => {
         "escrow-pub-key",
         "investor-wallet-address",
         "1000",
+        "escrow-secret",
+        "COFFEE-001",
+        100,
       );
 
       expect(result.stellarTxId).toBe("stellar-tx-456");
@@ -272,6 +281,52 @@ describe("InvestmentsService", () => {
           stellarTxId: "stellar-tx-456",
         }),
       );
+    });
+
+    it("enqueues investment.fund job when signedXdr is provided", async () => {
+      const investment = {
+        ...mockInvestment(),
+        status: InvestmentStatus.PENDING,
+        tradeDeal: mockTradeDeal(),
+      };
+
+      investmentRepo.findOne.mockResolvedValue(investment);
+
+      const result = await service.fundEscrow(
+        "inv-1",
+        "investor-wallet-address",
+        "signed-xdr-payload",
+      );
+
+      expect(queueService.enqueueInvestmentFund).toHaveBeenCalledWith(
+        expect.objectContaining({
+          investmentId: "inv-1",
+          signedXdr: "signed-xdr-payload",
+          escrowPublicKey: "escrow-pub-key",
+          investorWallet: "investor-wallet-address",
+          tokenAmount: 100,
+          amountUsd: 1000,
+        }),
+      );
+      expect(result.stellarTxId).toBe("queued");
+    });
+
+    it("does NOT modify total_invested when Stellar fails", async () => {
+      const investment = {
+        ...mockInvestment(),
+        status: InvestmentStatus.PENDING,
+        tradeDeal: mockTradeDeal(),
+      };
+
+      investmentRepo.findOne.mockResolvedValue(investment);
+      stellarService.fundEscrow.mockRejectedValue(new Error("Stellar network error"));
+
+      await expect(
+        service.fundEscrow("inv-1", "investor-wallet-address"),
+      ).rejects.toThrow("Stellar network error");
+
+      // total_invested must NOT be updated
+      expect(tradeDealRepo.update).not.toHaveBeenCalled();
     });
 
     it("throws error when investment not found", async () => {
@@ -294,6 +349,19 @@ describe("InvestmentsService", () => {
       await expect(
         service.fundEscrow("inv-1", "wallet-address"),
       ).rejects.toThrow(UnprocessableEntityException);
+    });
+  });
+
+  describe("markInvestmentFailed", () => {
+    it("sets investment status to failed without touching total_invested", async () => {
+      investmentRepo.update.mockResolvedValue({ affected: 1 });
+
+      await service.markInvestmentFailed("inv-1");
+
+      expect(investmentRepo.update).toHaveBeenCalledWith("inv-1", {
+        status: InvestmentStatus.FAILED,
+      });
+      expect(tradeDealRepo.update).not.toHaveBeenCalled();
     });
   });
 

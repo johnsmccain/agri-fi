@@ -10,6 +10,7 @@ import {
   BASE_FEE,
   Memo,
 } from 'stellar-sdk';
+import { createDecipheriv, createCipheriv, randomBytes } from 'crypto';
 
 export interface InvestorShare {
   walletAddress: string;
@@ -185,6 +186,9 @@ export class StellarService {
     escrowPublicKey: string,
     investorWallet: string,
     amountUSD: string,
+    encryptedEscrowSecret?: string,
+    assetCode?: string,
+    tokenAmount?: number,
   ): Promise<string> {
     // In MVP, we use XLM as the payment asset (1 XLM ≈ $1 for testnet simplicity)
     // Production would use USDC
@@ -207,7 +211,85 @@ export class StellarService {
     // Note: in production the investor signs this via their wallet (Freighter/Albedo)
     // For backend-initiated flows, we'd need the investor's secret — omitted here
     const result = await this.server.submitTransaction(tx);
-    return (result as any).hash as string;
+    const paymentTxId = (result as any).hash as string;
+
+    // If escrow secret and asset info provided, transfer Trade_Tokens to investor
+    if (encryptedEscrowSecret && assetCode && tokenAmount !== undefined) {
+      const escrowSecret = this.decryptSecret(encryptedEscrowSecret);
+      await this.transferTokensToInvestor(
+        escrowSecret,
+        escrowPublicKey,
+        investorWallet,
+        assetCode,
+        tokenAmount,
+      );
+    }
+
+    return paymentTxId;
+  }
+
+  /**
+   * Transfers Trade_Tokens from escrow account to investor wallet.
+   */
+  private async transferTokensToInvestor(
+    escrowSecret: string,
+    escrowPublicKey: string,
+    investorWallet: string,
+    assetCode: string,
+    tokenAmount: number,
+  ): Promise<string> {
+    const escrowKeypair = Keypair.fromSecret(escrowSecret);
+    const escrowAccount = await this.server.loadAccount(escrowPublicKey);
+
+    const tradeToken = new Asset(assetCode, escrowPublicKey);
+
+    const tx = new TransactionBuilder(escrowAccount, {
+      fee: BASE_FEE,
+      networkPassphrase: this.networkPassphrase,
+    })
+      .addOperation(
+        Operation.payment({
+          destination: investorWallet,
+          asset: tradeToken,
+          amount: tokenAmount.toFixed(7),
+        }),
+      )
+      .setTimeout(30)
+      .build();
+
+    tx.sign(escrowKeypair);
+
+    const result = await this.server.submitTransaction(tx);
+    const txId = (result as any).hash as string;
+    this.logger.log(`Transferred ${tokenAmount} ${assetCode} tokens to ${investorWallet}. txId=${txId}`);
+    return txId;
+  }
+
+  /**
+   * Encrypts a secret key using AES-256-CBC with the ENCRYPTION_KEY env var.
+   */
+  encryptSecret(secret: string): string {
+    const key = Buffer.from(
+      this.config.get<string>('ENCRYPTION_KEY', '').padEnd(32, '0').slice(0, 32),
+    );
+    const iv = randomBytes(16);
+    const cipher = createCipheriv('aes-256-cbc', key, iv);
+    const encrypted = Buffer.concat([cipher.update(secret, 'utf8'), cipher.final()]);
+    return `${iv.toString('hex')}:${encrypted.toString('hex')}`;
+  }
+
+  /**
+   * Decrypts a secret key encrypted by encryptSecret().
+   */
+  decryptSecret(encryptedSecret: string): string {
+    const key = Buffer.from(
+      this.config.get<string>('ENCRYPTION_KEY', '').padEnd(32, '0').slice(0, 32),
+    );
+    const [ivHex, encryptedHex] = encryptedSecret.split(':');
+    const iv = Buffer.from(ivHex, 'hex');
+    const encrypted = Buffer.from(encryptedHex, 'hex');
+    const decipher = createDecipheriv('aes-256-cbc', key, iv);
+    return Buffer.concat([decipher.update(encrypted), decipher.final()]).toString('utf8');
   }
 
   /**
