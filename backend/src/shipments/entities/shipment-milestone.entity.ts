@@ -3,8 +3,6 @@ import {
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
-  ManyToOne,
-  JoinColumn,
 } from 'typeorm';
 
 export type MilestoneType = 'farm' | 'warehouse' | 'port' | 'importer';

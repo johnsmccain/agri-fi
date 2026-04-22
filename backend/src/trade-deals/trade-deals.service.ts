@@ -3,14 +3,14 @@ import {
   NotFoundException,
   BadRequestException,
   UnprocessableEntityException,
-} from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import { TradeDeal, TradeDealStatus } from "./entities/trade-deal.entity";
-import { Document, DocumentType } from "./entities/document.entity";
-import { ShipmentMilestone } from "../shipments/entities/shipment-milestone.entity";
-import { CreateTradeDealDto } from "./dto/create-trade-deal.dto";
-import { User } from "../auth/entities/user.entity";
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { TradeDeal, TradeDealStatus } from './entities/trade-deal.entity';
+import { Document, DocumentType } from './entities/document.entity';
+import { ShipmentMilestone } from '../shipments/entities/shipment-milestone.entity';
+import { CreateTradeDealDto } from './dto/create-trade-deal.dto';
+import { User } from '../auth/entities/user.entity';
 
 const VALID_DOC_TYPES: DocumentType[] = [
   'purchase_agreement',
@@ -63,12 +63,12 @@ export class TradeDealsService {
     });
 
     if (!farmer) {
-      throw new NotFoundException("Farmer not found.");
+      throw new NotFoundException('Farmer not found.');
     }
 
-    if (farmer.role !== "farmer") {
+    if (farmer.role !== 'farmer') {
       throw new BadRequestException({
-        code: "INVALID_FARMER",
+        code: 'INVALID_FARMER',
         message: 'farmer_id must belong to a user with role "farmer".',
       });
     }
@@ -77,9 +77,9 @@ export class TradeDealsService {
 
     if (tokenCount < 1) {
       throw new BadRequestException({
-        code: "INVALID_TOKEN_COUNT",
+        code: 'INVALID_TOKEN_COUNT',
         message:
-          "total_value must be at least 100 USD to create at least one token.",
+          'total_value must be at least 100 USD to create at least one token.',
       });
     }
 
@@ -89,8 +89,8 @@ export class TradeDealsService {
       quantityUnit: dto.quantity_unit,
       totalValue: dto.total_value,
       tokenCount,
-      tokenSymbol: "PENDING",
-      status: "draft",
+      tokenSymbol: 'PENDING',
+      status: 'draft',
       farmerId: dto.farmer_id,
       traderId,
       totalInvested: 0,
@@ -121,26 +121,26 @@ export class TradeDealsService {
     const skip = (page - 1) * limit;
 
     const qb = this.tradeDealRepo
-      .createQueryBuilder("deal")
-      .where("deal.status = :status", { status: "open" })
+      .createQueryBuilder('deal')
+      .where('deal.status = :status', { status: 'open' })
       .select([
-        "deal.id",
-        "deal.commodity",
-        "deal.quantity",
-        "deal.quantityUnit",
-        "deal.totalValue",
-        "deal.totalInvested",
-        "deal.tokenCount",
-        "deal.tokenSymbol",
-        "deal.deliveryDate",
-        "deal.farmerId",
-        "deal.traderId",
+        'deal.id',
+        'deal.commodity',
+        'deal.quantity',
+        'deal.quantityUnit',
+        'deal.totalValue',
+        'deal.totalInvested',
+        'deal.tokenCount',
+        'deal.tokenSymbol',
+        'deal.deliveryDate',
+        'deal.farmerId',
+        'deal.traderId',
       ])
       .skip(skip)
       .take(limit);
 
     if (query.commodity) {
-      qb.andWhere("LOWER(deal.commodity) = LOWER(:commodity)", {
+      qb.andWhere('LOWER(deal.commodity) = LOWER(:commodity)', {
         commodity: query.commodity,
       });
     }
@@ -166,20 +166,20 @@ export class TradeDealsService {
   async findOne(id: string): Promise<any> {
     const deal = await this.tradeDealRepo.findOne({
       where: { id },
-      relations: ["farmer", "trader", "documents", "investments"],
+      relations: ['farmer', 'trader', 'documents', 'investments'],
     });
 
     if (!deal) {
-      throw new NotFoundException("Trade deal not found");
+      throw new NotFoundException('Trade deal not found');
     }
 
     const milestones = await this.milestoneRepo.find({
       where: { tradeDealId: id },
-      order: { recordedAt: "ASC" },
+      order: { recordedAt: 'ASC' },
     });
 
     const confirmedInvestments =
-      deal.investments?.filter((inv) => inv.status === "confirmed") || [];
+      deal.investments?.filter((inv) => inv.status === 'confirmed') || [];
     const tokensSold = confirmedInvestments.reduce(
       (sum, inv) => sum + Number(inv.tokenAmount),
       0,
@@ -200,7 +200,7 @@ export class TradeDealsService {
       farmerId: deal.farmerId,
       traderId: deal.traderId,
       tokensRemaining,
-      traderName: deal.trader?.email || "Unknown Trader",
+      traderName: deal.trader?.email || 'Unknown Trader',
       description: `${deal.quantity} ${deal.quantityUnit} of ${deal.commodity} for delivery by ${new Date(
         deal.deliveryDate,
       ).toLocaleDateString()}`,
@@ -258,14 +258,19 @@ export class TradeDealsService {
       });
     }
 
-    if (dto.fileSizeBytes !== undefined && dto.fileSizeBytes > MAX_FILE_SIZE_BYTES) {
+    if (
+      dto.fileSizeBytes !== undefined &&
+      dto.fileSizeBytes > MAX_FILE_SIZE_BYTES
+    ) {
       throw new BadRequestException({
         code: 'FILE_TOO_LARGE',
         message: `File size exceeds the maximum allowed size of ${MAX_FILE_SIZE_BYTES / (1024 * 1024)} MB.`,
       });
     }
 
-    const deal = await this.tradeDealRepo.findOne({ where: { id: dto.tradeDealId } });
+    const deal = await this.tradeDealRepo.findOne({
+      where: { id: dto.tradeDealId },
+    });
     if (!deal) {
       throw new NotFoundException('Trade deal not found.');
     }
@@ -284,11 +289,11 @@ export class TradeDealsService {
 
   private generateTokenSymbol(commodity: string, dealId: string): string {
     const commodityCode = commodity
-      .replace(/[^a-zA-Z0-9]/g, "")
+      .replace(/[^a-zA-Z0-9]/g, '')
       .toUpperCase()
       .slice(0, 8);
 
-    const dealShortId = dealId.replace(/-/g, "").slice(-4);
+    const dealShortId = dealId.replace(/-/g, '').slice(-4);
     return `${commodityCode}${dealShortId}`.slice(0, 12);
   }
 }

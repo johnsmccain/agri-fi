@@ -113,7 +113,9 @@ describe('StorageService', () => {
     });
 
     it('reconstructs IPFS gateway URL for a CID starting with bafy', async () => {
-      const url = await service.getUrl('bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi');
+      const url = await service.getUrl(
+        'bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi',
+      );
       expect(url).toContain('/ipfs/bafy');
     });
 

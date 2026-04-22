@@ -15,7 +15,12 @@ export { QUEUE_SERVICE } from './queue.constants';
         useFactory: (config: ConfigService) => ({
           transport: Transport.RMQ,
           options: {
-            urls: [config.get<string>('RABBITMQ_URL', 'amqp://guest:guest@localhost:5672')],
+            urls: [
+              config.get<string>(
+                'RABBITMQ_URL',
+                'amqp://guest:guest@localhost:5672',
+              ),
+            ],
             queue: 'agric_onchain_queue',
             queueOptions: { durable: true },
           },

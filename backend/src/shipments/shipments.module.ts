@@ -6,10 +6,7 @@ import { ShipmentsController } from './shipments.controller';
 import { QueueModule } from '../queue/queue.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([ShipmentMilestone]),
-    QueueModule,
-  ],
+  imports: [TypeOrmModule.forFeature([ShipmentMilestone]), QueueModule],
   providers: [ShipmentsService],
   controllers: [ShipmentsController],
 })

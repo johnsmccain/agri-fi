@@ -8,7 +8,7 @@ import {
 import { User } from '../../auth/entities/user.entity';
 import { TradeDeal } from './trade-deal.entity';
 
-export type DocumentType = 
+export type DocumentType =
   | 'purchase_agreement'
   | 'bill_of_lading'
   | 'export_certificate'
@@ -41,7 +41,7 @@ export class Document {
   createdAt: Date;
 
   // Relations
-  @ManyToOne(() => TradeDeal, tradeDeal => tradeDeal.documents)
+  @ManyToOne(() => TradeDeal, (tradeDeal) => tradeDeal.documents)
   tradeDeal: TradeDeal;
 
   @ManyToOne(() => User)

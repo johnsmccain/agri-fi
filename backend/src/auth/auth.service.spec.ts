@@ -40,7 +40,10 @@ describe('AuthService', () => {
   describe('register', () => {
     it('creates a user with pending KYC', async () => {
       userRepo.findOne.mockResolvedValue(null);
-      const user = { ...mockUser(), passwordHash: await bcrypt.hash('password1', 10) };
+      const user = {
+        ...mockUser(),
+        passwordHash: await bcrypt.hash('password1', 10),
+      };
       userRepo.create.mockReturnValue(user);
       userRepo.save.mockResolvedValue(user);
 
@@ -76,7 +79,10 @@ describe('AuthService', () => {
       const hash = await bcrypt.hash('secret123', 10);
       userRepo.findOne.mockResolvedValue({ ...mockUser(), passwordHash: hash });
 
-      const result = await service.login({ email: 'farmer@example.com', password: 'secret123' });
+      const result = await service.login({
+        email: 'farmer@example.com',
+        password: 'secret123',
+      });
       expect(result.accessToken).toBe('token');
     });
 
@@ -84,16 +90,16 @@ describe('AuthService', () => {
       const hash = await bcrypt.hash('correct', 10);
       userRepo.findOne.mockResolvedValue({ ...mockUser(), passwordHash: hash });
 
-      await expect(service.login({ email: 'farmer@example.com', password: 'wrong' })).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        service.login({ email: 'farmer@example.com', password: 'wrong' }),
+      ).rejects.toThrow(UnauthorizedException);
     });
 
     it('throws UnauthorizedException when user not found', async () => {
       userRepo.findOne.mockResolvedValue(null);
-      await expect(service.login({ email: 'nobody@example.com', password: 'x' })).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        service.login({ email: 'nobody@example.com', password: 'x' }),
+      ).rejects.toThrow(UnauthorizedException);
     });
   });
 

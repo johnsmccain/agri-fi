@@ -6,8 +6,8 @@ import {
   IsPositive,
   IsString,
   IsUUID,
-} from "class-validator";
-import { Type } from "class-transformer";
+} from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class CreateTradeDealDto {
   @IsString()
@@ -20,8 +20,8 @@ export class CreateTradeDealDto {
   quantity: number;
 
   @IsString()
-  @IsIn(["kg", "tons"])
-  quantity_unit: "kg" | "tons";
+  @IsIn(['kg', 'tons'])
+  quantity_unit: 'kg' | 'tons';
 
   @Type(() => Number)
   @IsNumber()

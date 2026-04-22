@@ -31,7 +31,11 @@ describe('EscrowService', () => {
     };
 
     mockDataSource = {
-      transaction: jest.fn().mockImplementation((cb: (m: typeof mockManager) => Promise<unknown>) => cb(mockManager)),
+      transaction: jest
+        .fn()
+        .mockImplementation((cb: (m: typeof mockManager) => Promise<unknown>) =>
+          cb(mockManager),
+        ),
     } as any;
 
     mockPaymentDistributionRepo = {
@@ -151,8 +155,16 @@ describe('EscrowService', () => {
         'escrow-secret',
         'farmer-wallet',
         [
-          { walletAddress: 'investor-1-wallet', tokenAmount: 50, totalTokens: 100 },
-          { walletAddress: 'investor-2-wallet', tokenAmount: 50, totalTokens: 100 },
+          {
+            walletAddress: 'investor-1-wallet',
+            tokenAmount: 50,
+            totalTokens: 100,
+          },
+          {
+            walletAddress: 'investor-2-wallet',
+            tokenAmount: 50,
+            totalTokens: 100,
+          },
         ],
         'platform-wallet',
         10000,
@@ -229,12 +241,14 @@ describe('EscrowService', () => {
         (cb: (m: typeof mockManager) => Promise<unknown>) => cb(mockManager),
       );
       mockConfigService.get.mockReturnValue('platform-wallet');
-      
+
       // Simulate Stellar failure
       const stellarError = new Error('Stellar network error');
       mockStellarService.releaseEscrow.mockRejectedValue(stellarError);
 
-      await expect(service.processDealDelivered(payload)).rejects.toThrow('Stellar network error');
+      await expect(service.processDealDelivered(payload)).rejects.toThrow(
+        'Stellar network error',
+      );
 
       // Verify admin alert was sent
       expect(mockQueueService.emit).toHaveBeenCalledWith('admin.alert', {

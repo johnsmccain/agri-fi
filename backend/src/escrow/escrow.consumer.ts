@@ -14,9 +14,11 @@ export class EscrowConsumer {
   constructor(private readonly escrowService: EscrowService) {}
 
   @EventPattern('deal.delivered')
-  async handleDealDelivered(@Payload() payload: DealDeliveredPayload): Promise<void> {
+  async handleDealDelivered(
+    @Payload() payload: DealDeliveredPayload,
+  ): Promise<void> {
     const { tradeDealId } = payload;
-    
+
     this.logger.log(`Received deal.delivered event for deal ${tradeDealId}`);
 
     let attempt = 0;
@@ -24,7 +26,7 @@ export class EscrowConsumer {
 
     while (attempt < this.maxRetries) {
       attempt++;
-      
+
       try {
         await this.escrowService.processDealDelivered(payload);
         this.logger.log(
@@ -33,12 +35,12 @@ export class EscrowConsumer {
         return;
       } catch (error) {
         lastError = error as Error;
-        
+
         if (this.isTransientError(error)) {
           this.logger.warn(
             `Transient error processing deal ${tradeDealId} (attempt ${attempt}/${this.maxRetries}): ${error.message}`,
           );
-          
+
           if (attempt < this.maxRetries) {
             // Exponential backoff: 1s, 2s, 4s
             const delay = Math.pow(2, attempt - 1) * 1000;
@@ -68,22 +70,34 @@ export class EscrowConsumer {
 
   private isTransientError(error: any): boolean {
     // Consider Stellar network errors as transient
-    if (error.message?.includes('stellar') || error.message?.includes('horizon')) {
+    if (
+      error.message?.includes('stellar') ||
+      error.message?.includes('horizon')
+    ) {
       return true;
     }
 
     // Consider timeout errors as transient
-    if (error.message?.includes('timeout') || error.message?.includes('ETIMEDOUT')) {
+    if (
+      error.message?.includes('timeout') ||
+      error.message?.includes('ETIMEDOUT')
+    ) {
       return true;
     }
 
     // Consider connection errors as transient
-    if (error.message?.includes('ECONNREFUSED') || error.message?.includes('ENOTFOUND')) {
+    if (
+      error.message?.includes('ECONNREFUSED') ||
+      error.message?.includes('ENOTFOUND')
+    ) {
       return true;
     }
 
     // Database connection issues
-    if (error.message?.includes('connection') && error.message?.includes('database')) {
+    if (
+      error.message?.includes('connection') &&
+      error.message?.includes('database')
+    ) {
       return true;
     }
 

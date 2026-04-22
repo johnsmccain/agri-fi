@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { UsersService } from './users.service';
-import { User, UserRole } from '../auth/entities/user.entity';
+import { User } from '../auth/entities/user.entity';
 
 interface AuthRequest extends Request {
   user: User;
@@ -21,7 +21,7 @@ export class UsersController {
   @Get('me/deals')
   async getUserDeals(@Request() req: AuthRequest) {
     const { id, role } = req.user;
-    
+
     if (role === 'investor') {
       throw new ForbiddenException('Investors cannot access deals endpoint');
     }
@@ -32,9 +32,11 @@ export class UsersController {
   @Get('me/investments')
   async getUserInvestments(@Request() req: AuthRequest) {
     const { id, role } = req.user;
-    
+
     if (role !== 'investor') {
-      throw new ForbiddenException('Only investors can access investments endpoint');
+      throw new ForbiddenException(
+        'Only investors can access investments endpoint',
+      );
     }
 
     return this.usersService.getUserInvestments(id, role);

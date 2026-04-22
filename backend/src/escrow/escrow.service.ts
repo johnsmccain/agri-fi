@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  Logger,
-  NotFoundException,
-  InternalServerErrorException,
-} from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
@@ -39,7 +34,7 @@ export class EscrowService {
 
   async processDealDelivered(payload: DealDeliveredPayload): Promise<void> {
     const { tradeDealId } = payload;
-    
+
     this.logger.log(`Processing deal.delivered for deal ${tradeDealId}`);
 
     try {
@@ -68,13 +63,17 @@ export class EscrowService {
         });
 
         if (investments.length === 0) {
-          this.logger.warn(`No confirmed investments found for deal ${tradeDealId}`);
+          this.logger.warn(
+            `No confirmed investments found for deal ${tradeDealId}`,
+          );
           return;
         }
 
         // Validate wallet addresses
         if (!deal.farmer?.walletAddress) {
-          throw new Error(`Farmer wallet address not found for deal ${tradeDealId}`);
+          throw new Error(
+            `Farmer wallet address not found for deal ${tradeDealId}`,
+          );
         }
 
         const investorsWithoutWallet = investments.filter(
@@ -87,7 +86,10 @@ export class EscrowService {
         }
 
         // Prepare investor shares for Stellar service
-        const totalTokens = investments.reduce((sum, inv) => sum + inv.tokenAmount, 0);
+        const totalTokens = investments.reduce(
+          (sum, inv) => sum + inv.tokenAmount,
+          0,
+        );
         const investorShares: InvestorShare[] = investments.map((inv) => ({
           walletAddress: inv.investor.walletAddress!,
           tokenAmount: inv.tokenAmount,
@@ -135,7 +137,8 @@ export class EscrowService {
 
         // Investor payments (proportional)
         for (const investment of investments) {
-          const investorAmount = (investment.tokenAmount / totalTokens) * deal.totalValue;
+          const investorAmount =
+            (investment.tokenAmount / totalTokens) * deal.totalValue;
           paymentDistributions.push(
             manager.create(PaymentDistribution, {
               tradeDealId,
@@ -184,7 +187,10 @@ export class EscrowService {
     }
   }
 
-  private async handleEscrowFailure(tradeDealId: string, error: any): Promise<void> {
+  private async handleEscrowFailure(
+    tradeDealId: string,
+    error: any,
+  ): Promise<void> {
     this.logger.error(
       `Escrow release failed for deal ${tradeDealId}: ${error.message}`,
       error.stack,
@@ -205,7 +211,9 @@ export class EscrowService {
         timestamp: new Date().toISOString(),
       });
 
-      this.logger.log(`Admin alert sent for failed escrow release: ${tradeDealId}`);
+      this.logger.log(
+        `Admin alert sent for failed escrow release: ${tradeDealId}`,
+      );
     } catch (alertError) {
       this.logger.error(
         `Failed to send admin alert for deal ${tradeDealId}`,
@@ -247,8 +255,11 @@ export class EscrowService {
 
       // Notify all investors
       for (const investment of investments) {
-        const investorAmount = (investment.tokenAmount / investments.reduce((sum, inv) => sum + inv.tokenAmount, 0)) * deal.totalValue;
-        
+        const investorAmount =
+          (investment.tokenAmount /
+            investments.reduce((sum, inv) => sum + inv.tokenAmount, 0)) *
+          deal.totalValue;
+
         await this.queueService.emit('email.notification', {
           type: 'deal_completed',
           recipient: 'investor',

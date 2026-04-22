@@ -2,13 +2,15 @@ import {
   Injectable,
   NotFoundException,
   UnprocessableEntityException,
-  ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { Investment, InvestmentStatus } from './entities/investment.entity';
 import { CreateInvestmentDto } from './dto/create-investment.dto';
-import { TradeDeal, TradeDealStatus } from '../trade-deals/entities/trade-deal.entity';
+import {
+  TradeDeal,
+  TradeDealStatus,
+} from '../trade-deals/entities/trade-deal.entity';
 import { StellarService } from '../stellar/stellar.service';
 import { QueueService } from '../queue/queue.service';
 
@@ -50,7 +52,10 @@ export class InvestmentsService {
 
     // Check token availability
     const currentInvestments = await this.investmentRepo.find({
-      where: { tradeDealId: dto.tradeDealId, status: InvestmentStatus.CONFIRMED },
+      where: {
+        tradeDealId: dto.tradeDealId,
+        status: InvestmentStatus.CONFIRMED,
+      },
     });
 
     const totalTokensInvested = currentInvestments.reduce(
@@ -129,7 +134,10 @@ export class InvestmentsService {
       });
 
       const confirmedInvestments = await manager.find(Investment, {
-        where: { tradeDealId: tradeDeal.id, status: InvestmentStatus.CONFIRMED },
+        where: {
+          tradeDealId: tradeDeal.id,
+          status: InvestmentStatus.CONFIRMED,
+        },
       });
 
       const newTotalInvested = confirmedInvestments.reduce(
@@ -137,7 +145,9 @@ export class InvestmentsService {
         0,
       );
 
-      await manager.update(TradeDeal, tradeDeal.id, { totalInvested: newTotalInvested });
+      await manager.update(TradeDeal, tradeDeal.id, {
+        totalInvested: newTotalInvested,
+      });
 
       if (newTotalInvested >= Number(tradeDeal.totalValue)) {
         const result = await manager.update(
@@ -228,7 +238,10 @@ export class InvestmentsService {
   private async sendFundedNotification(tradeDeal: TradeDeal): Promise<void> {
     try {
       const investments = await this.investmentRepo.find({
-        where: { tradeDealId: tradeDeal.id, status: InvestmentStatus.CONFIRMED },
+        where: {
+          tradeDealId: tradeDeal.id,
+          status: InvestmentStatus.CONFIRMED,
+        },
         relations: ['investor'],
       });
       await this.queueService.enqueueDealFunded({

@@ -8,32 +8,32 @@ import {
   UseGuards,
   Request,
   ForbiddenException,
-} from "@nestjs/common";
-import { AuthGuard } from "@nestjs/passport";
-import { TradeDealsService } from "./trade-deals.service";
-import { TradeDeal } from "./entities/trade-deal.entity";
-import { User } from "../auth/entities/user.entity";
-import { KycGuard } from "../auth/kyc.guard";
-import { CreateTradeDealDto } from "./dto/create-trade-deal.dto";
+} from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { TradeDealsService } from './trade-deals.service';
+import { TradeDeal } from './entities/trade-deal.entity';
+import { User } from '../auth/entities/user.entity';
+import { KycGuard } from '../auth/kyc.guard';
+import { CreateTradeDealDto } from './dto/create-trade-deal.dto';
 
 interface AuthRequest extends Request {
   user: User;
 }
 
-@Controller("trade-deals")
+@Controller('trade-deals')
 export class TradeDealsController {
   constructor(private readonly tradeDealsService: TradeDealsService) {}
 
   @Post()
-  @UseGuards(AuthGuard("jwt"), KycGuard)
+  @UseGuards(AuthGuard('jwt'), KycGuard)
   async createDeal(
     @Request() req: AuthRequest,
     @Body() dto: CreateTradeDealDto,
   ): Promise<TradeDeal> {
-    if (req.user.role !== "trader") {
+    if (req.user.role !== 'trader') {
       throw new ForbiddenException({
-        code: "ROLE_REQUIRED",
-        message: "Only traders can create trade deals.",
+        code: 'ROLE_REQUIRED',
+        message: 'Only traders can create trade deals.',
       });
     }
 
@@ -42,9 +42,9 @@ export class TradeDealsController {
 
   @Get()
   async findOpen(
-    @Query("commodity") commodity?: string,
-    @Query("page") page?: string,
-    @Query("limit") limit?: string,
+    @Query('commodity') commodity?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
   ): Promise<any[]> {
     return this.tradeDealsService.findOpen({
       commodity,
@@ -53,9 +53,9 @@ export class TradeDealsController {
     });
   }
 
-  @Get(":id")
-  @UseGuards(AuthGuard("jwt"))
-  async findOne(@Param("id") id: string): Promise<any> {
+  @Get(':id')
+  @UseGuards(AuthGuard('jwt'))
+  async findOne(@Param('id') id: string): Promise<any> {
     return this.tradeDealsService.findOne(id);
   }
 }

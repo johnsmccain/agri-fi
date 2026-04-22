@@ -23,7 +23,10 @@ export class StorageService {
   private readonly s3Region: string;
 
   constructor(private readonly config: ConfigService) {
-    this.ipfsGateway = config.get<string>('IPFS_GATEWAY', 'https://api.web3.storage');
+    this.ipfsGateway = config.get<string>(
+      'IPFS_GATEWAY',
+      'https://api.web3.storage',
+    );
     this.ipfsToken = config.get<string>('IPFS_TOKEN', '');
     this.s3Bucket = config.get<string>('AWS_S3_BUCKET', '');
     this.s3Region = config.get<string>('AWS_REGION', 'us-east-1');
@@ -41,7 +44,9 @@ export class StorageService {
     try {
       return await this.uploadToIpfs(file, mimeType);
     } catch (ipfsErr) {
-      this.logger.warn(`IPFS upload failed: ${ipfsErr.message}. Falling back to S3.`);
+      this.logger.warn(
+        `IPFS upload failed: ${ipfsErr.message}. Falling back to S3.`,
+      );
     }
 
     try {
@@ -63,18 +68,17 @@ export class StorageService {
     return `https://${this.s3Bucket}.s3.${this.s3Region}.amazonaws.com/${hash}`;
   }
 
-  private async uploadToIpfs(file: Buffer, mimeType: string): Promise<StorageResult> {
-    const response = await axios.post(
-      `${this.ipfsGateway}/upload`,
-      file,
-      {
-        headers: {
-          Authorization: `Bearer ${this.ipfsToken}`,
-          'Content-Type': mimeType,
-        },
-        maxBodyLength: Infinity,
+  private async uploadToIpfs(
+    file: Buffer,
+    mimeType: string,
+  ): Promise<StorageResult> {
+    const response = await axios.post(`${this.ipfsGateway}/upload`, file, {
+      headers: {
+        Authorization: `Bearer ${this.ipfsToken}`,
+        'Content-Type': mimeType,
       },
-    );
+      maxBodyLength: Infinity,
+    });
 
     const cid: string = response.data?.cid;
     if (!cid) {
@@ -87,7 +91,10 @@ export class StorageService {
     };
   }
 
-  private async uploadToS3(file: Buffer, mimeType: string): Promise<StorageResult> {
+  private async uploadToS3(
+    file: Buffer,
+    mimeType: string,
+  ): Promise<StorageResult> {
     const key = `uploads/${randomUUID()}`;
 
     await this.s3.send(

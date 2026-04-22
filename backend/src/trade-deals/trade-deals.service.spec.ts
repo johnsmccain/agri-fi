@@ -1,6 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { BadRequestException, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+import {
+  BadRequestException,
+  NotFoundException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { TradeDealsService } from './trade-deals.service';
 import { TradeDeal } from './entities/trade-deal.entity';
 import { Document } from './entities/document.entity';
@@ -70,7 +74,10 @@ describe('TradeDealsService', () => {
         TradeDealsService,
         { provide: getRepositoryToken(TradeDeal), useValue: tradeDealRepo },
         { provide: getRepositoryToken(Document), useValue: documentRepo },
-        { provide: getRepositoryToken(ShipmentMilestone), useValue: milestoneRepo },
+        {
+          provide: getRepositoryToken(ShipmentMilestone),
+          useValue: milestoneRepo,
+        },
         { provide: getRepositoryToken(User), useValue: userRepo },
       ],
     }).compile();
@@ -301,7 +308,12 @@ describe('TradeDealsService', () => {
 
       for (const docType of validTypes) {
         tradeDealRepo.findOne.mockResolvedValue(mockDeal());
-        const savedDoc = { id: 'doc-uuid', ...baseDto, docType, stellarTxId: null };
+        const savedDoc = {
+          id: 'doc-uuid',
+          ...baseDto,
+          docType,
+          stellarTxId: null,
+        };
         documentRepo.create.mockReturnValue(savedDoc);
         documentRepo.save.mockResolvedValue(savedDoc);
 

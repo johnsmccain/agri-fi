@@ -1,7 +1,7 @@
 import { Injectable, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { User, UserRole } from '../auth/entities/user.entity';
+import { UserRole } from '../auth/entities/user.entity';
 import { TradeDeal } from './entities/trade-deal.entity';
 import { Investment } from './entities/investment.entity';
 import { ShipmentMilestone } from '../shipments/entities/shipment-milestone.entity';
@@ -22,9 +22,8 @@ export class UsersService {
       throw new ForbiddenException('Investors cannot access deals endpoint');
     }
 
-    const whereCondition = userRole === 'farmer' 
-      ? { farmerId: userId }
-      : { traderId: userId };
+    const whereCondition =
+      userRole === 'farmer' ? { farmerId: userId } : { traderId: userId };
 
     const deals = await this.tradeDealRepository.find({
       where: whereCondition,
@@ -58,7 +57,9 @@ export class UsersService {
 
   async getUserInvestments(userId: string, userRole: UserRole): Promise<any[]> {
     if (userRole !== 'investor') {
-      throw new ForbiddenException('Only investors can access investments endpoint');
+      throw new ForbiddenException(
+        'Only investors can access investments endpoint',
+      );
     }
 
     const investments = await this.investmentRepository.find({

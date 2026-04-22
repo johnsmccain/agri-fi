@@ -7,13 +7,21 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
-import { ShipmentMilestone, MilestoneType } from './entities/shipment-milestone.entity';
+import {
+  ShipmentMilestone,
+  MilestoneType,
+} from './entities/shipment-milestone.entity';
 import { CreateMilestoneDto } from './dto/create-milestone.dto';
 import { StellarService } from '../stellar/stellar.service';
 import { QueueService } from '../queue/queue.service';
 import { ConfigService } from '@nestjs/config';
 
-const MILESTONE_SEQUENCE: MilestoneType[] = ['farm', 'warehouse', 'port', 'importer'];
+const MILESTONE_SEQUENCE: MilestoneType[] = [
+  'farm',
+  'warehouse',
+  'port',
+  'importer',
+];
 
 @Injectable()
 export class ShipmentsService {
@@ -63,7 +71,8 @@ export class ShipmentsService {
       if (deal.trader_id !== userId) {
         throw new ForbiddenException({
           code: 'NOT_ASSIGNED_TRADER',
-          message: 'Only the assigned trader can record milestones for this deal.',
+          message:
+            'Only the assigned trader can record milestones for this deal.',
         });
       }
 
@@ -96,7 +105,10 @@ export class ShipmentsService {
         deal.escrow_secret_key ||
         this.config.get<string>('STELLAR_PLATFORM_SECRET', '');
 
-      const stellarTxId = await this.stellarService.recordMemo(memoText, signerSecret);
+      const stellarTxId = await this.stellarService.recordMemo(
+        memoText,
+        signerSecret,
+      );
 
       // Create and save the milestone
       const milestone = manager.create(ShipmentMilestone, {

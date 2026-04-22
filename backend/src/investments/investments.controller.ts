@@ -10,16 +10,8 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-
-interface AuthRequest extends Request {
-  user: { id: string; role: string };
-}
-
-
-import { KycGuard } from '../auth/kyc.guard';
 import { InvestmentsService } from './investments.service';
 import { CreateInvestmentDto } from './dto/create-investment.dto';
-import { User } from '../auth/entities/user.entity';
 
 @UseGuards(AuthGuard('jwt'))
 @Controller('investments')

@@ -11,7 +11,13 @@ import { User } from '../../auth/entities/user.entity';
 import { Investment } from './investment.entity';
 import { ShipmentMilestone } from '../../shipments/entities/shipment-milestone.entity';
 
-export type DealStatus = 'draft' | 'open' | 'funded' | 'delivered' | 'completed' | 'failed';
+export type DealStatus =
+  | 'draft'
+  | 'open'
+  | 'funded'
+  | 'delivered'
+  | 'completed'
+  | 'failed';
 
 @Entity('trade_deals')
 export class TradeDeal {
@@ -74,10 +80,13 @@ export class TradeDeal {
   @Column({ name: 'stellar_asset_tx_id', nullable: true })
   stellarAssetTxId: string | null;
 
-  @OneToMany(() => Investment, investment => investment.tradeDeal)
+  @OneToMany(() => Investment, (investment) => investment.tradeDeal)
   investments: Investment[];
 
-  @OneToMany(() => ShipmentMilestone, milestone => (milestone as any).tradeDeal)
+  @OneToMany(
+    () => ShipmentMilestone,
+    (milestone) => (milestone as any).tradeDeal,
+  )
   milestones: ShipmentMilestone[];
 
   @CreateDateColumn({ name: 'created_at' })

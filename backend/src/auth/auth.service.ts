@@ -20,10 +20,17 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async register(dto: RegisterDto): Promise<{ id: string; email: string; role: string; kycStatus: string }> {
-    const existing = await this.userRepo.findOne({ where: { email: dto.email } });
+  async register(
+    dto: RegisterDto,
+  ): Promise<{ id: string; email: string; role: string; kycStatus: string }> {
+    const existing = await this.userRepo.findOne({
+      where: { email: dto.email },
+    });
     if (existing) {
-      throw new ConflictException({ code: 'EMAIL_EXISTS', message: 'Email is already registered.' });
+      throw new ConflictException({
+        code: 'EMAIL_EXISTS',
+        message: 'Email is already registered.',
+      });
     }
 
     const passwordHash = await bcrypt.hash(dto.password, 10);
@@ -36,7 +43,12 @@ export class AuthService {
     });
 
     const saved = await this.userRepo.save(user);
-    return { id: saved.id, email: saved.email, role: saved.role, kycStatus: saved.kycStatus };
+    return {
+      id: saved.id,
+      email: saved.email,
+      role: saved.role,
+      kycStatus: saved.kycStatus,
+    };
   }
 
   async login(dto: LoginDto): Promise<{ accessToken: string }> {
@@ -46,11 +58,18 @@ export class AuthService {
     const valid = await bcrypt.compare(dto.password, user.passwordHash);
     if (!valid) throw new UnauthorizedException('Invalid credentials.');
 
-    const token = this.jwtService.sign({ sub: user.id, email: user.email, role: user.role });
+    const token = this.jwtService.sign({
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+    });
     return { accessToken: token };
   }
 
-  async linkWallet(userId: string, walletAddress: string): Promise<{ walletAddress: string }> {
+  async linkWallet(
+    userId: string,
+    walletAddress: string,
+  ): Promise<{ walletAddress: string }> {
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found.');
 
@@ -59,7 +78,10 @@ export class AuthService {
     return { walletAddress };
   }
 
-  async submitKyc(userId: string, dto: KycDto): Promise<{ kycStatus: string }> {
+  async submitKyc(
+    userId: string,
+    _dto: KycDto,
+  ): Promise<{ kycStatus: string }> {
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found.');
 

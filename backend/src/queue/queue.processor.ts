@@ -44,7 +44,7 @@ export class QueueProcessor {
     @Ctx() context: RmqContext,
   ) {
     this.logger.log(`Processing deal.publish for deal ${data.dealId}`);
-    
+
     try {
       // Call StellarService.issueTradeToken
       const result = await this.stellarService.issueTradeToken(
@@ -85,7 +85,9 @@ export class QueueProcessor {
     @Payload() data: InvestmentFundPayload,
     @Ctx() context: RmqContext,
   ) {
-    this.logger.log(`Processing investment.fund for investment ${data.investmentId}`);
+    this.logger.log(
+      `Processing investment.fund for investment ${data.investmentId}`,
+    );
 
     let attempt = 0;
     let lastError: Error | null = null;
@@ -93,11 +95,15 @@ export class QueueProcessor {
     while (attempt < MAX_RETRIES) {
       try {
         // Submit the investor-signed XDR to Stellar
-        const result = await this.stellarService.submitTransaction(data.signedXdr);
+        const result = await this.stellarService.submitTransaction(
+          data.signedXdr,
+        );
         const stellarTxId: string = result.hash;
 
         // Transfer Trade_Tokens from escrow to investor
-        const escrowSecret = this.stellarService.decryptSecret(data.encryptedEscrowSecret);
+        const escrowSecret = this.stellarService.decryptSecret(
+          data.encryptedEscrowSecret,
+        );
         await (this.stellarService as any).transferTokensToInvestor(
           escrowSecret,
           data.escrowPublicKey,
@@ -136,7 +142,9 @@ export class QueueProcessor {
     this.logger.error(
       `investment.fund permanently failed for ${data.investmentId} after ${MAX_RETRIES} attempts: ${lastError?.message}`,
     );
-    await this.investmentRepo.update(data.investmentId, { status: 'failed' as any });
+    await this.investmentRepo.update(data.investmentId, {
+      status: 'failed' as any,
+    });
 
     const channel = context.getChannelRef();
     channel.ack(context.getMessage());
