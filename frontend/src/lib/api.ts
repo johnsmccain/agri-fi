@@ -135,8 +135,10 @@ export async function getOpenDeals(): Promise<Deal[]> {
 }
 
 export async function getDealById(id: string): Promise<Deal | null> {
-  const res = await fetch(`${API_BASE}/trade-deals/${id}`, { cache: 'no-store' });
-  if (res.status === 404) return null;
-  if (!res.ok) throw new Error('Failed to fetch deal');
-  return res.json();
+  try {
+    return await apiFetch<Deal>(`/trade-deals/${id}`);
+  } catch (err: any) {
+    if (err?.response?.status === 404) return null;
+    throw err;
+  }
 }

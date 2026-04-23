@@ -20,6 +20,8 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { InvestmentsService } from './investments.service';
 import { CreateInvestmentDto } from './dto/create-investment.dto';
+import { KycGuard } from '../auth/kyc.guard';
+import { Roles, RolesGuard } from '../auth/roles.guard';
 
 @ApiTags('investments')
 @ApiBearerAuth('jwt')
@@ -42,6 +44,8 @@ export class InvestmentsController {
   })
   @ApiResponse({ status: 404, description: 'Trade deal not found' })
   @ApiResponse({ status: 409, description: 'Deal already fully funded' })
+  @UseGuards(KycGuard, RolesGuard)
+  @Roles('investor')
   async createInvestment(
     @Request() req: { user: { id: string; role: string } },
     @Body() createInvestmentDto: CreateInvestmentDto,
@@ -78,6 +82,8 @@ export class InvestmentsController {
     description: 'Only investors can fund investments',
   })
   @ApiResponse({ status: 404, description: 'Investment not found' })
+  @UseGuards(RolesGuard)
+  @Roles('investor')
   async fundEscrow(
     @Request() req: { user: { id: string; role: string } },
     @Param('id') id: string,
